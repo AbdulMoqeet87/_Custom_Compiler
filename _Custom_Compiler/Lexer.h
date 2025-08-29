@@ -6,10 +6,12 @@ using namespace std;
 
 class Lexer
 {
-	vector<string>Tokens;
-
+	vector<string>tokens;
+	vector<string>key_words;
 public:
-	
+	Lexer();
+	void LoadKeyWordsFromFile(const string file_name);
+	vector<string>CreateTokens();
 
 };
 
