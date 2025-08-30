@@ -24,6 +24,7 @@ class Without_regex_Lexer
     unordered_map<string, string> keywords;
     int line_number = 1;
     int column_number = 1;
+    bool isComment = false;
     public:
         Without_regex_Lexer();
         bool isKeyword(const string& word);
