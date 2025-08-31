@@ -16,18 +16,21 @@ Lexer_regex::Lexer_regex() : master(
     "\"([^\"\\\\]|\\\\.)*\"|"                  
     "==|=|;|,|"                                
     "\\(|\\)|\\{|\\}|"
-    "!=|<=|>=|<|>|"
+    ">>|<<|!=|<=|>=|<|>|"
     "/\\*|\\*/|"
     "\\+|\\-|\\*|/"
-    "&&|"          // logical AND
-    "\\|\\||"      // logical OR
-    "!|"           // logical NOT
-    "\\+\\+|"      // increment
-    "--"           // decrement
+    "&&|"          
+    "\\|\\||"      
+    "!|"           
+    "\\+\\+|"      
+    "--|"
+     
 
 ) , curr_line(1), invalid_regexs{regex("[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]*")}
 {
     is_comment = false;
+    keywords["cout"] = "T_COUT";
+    keywords["cin"] = "T_CIN";
     keywords["int"] = "T_INT";
     keywords["main"] = "T_MAIN";
     keywords["float"] = "T_FLOAT";
@@ -68,44 +71,45 @@ Lexer_regex::Lexer_regex() : master(
     token_patterns["T_NUMBER"] = std::regex("[0-9]+");
     token_patterns["T_ASSIGN"] = regex("=");
     token_patterns["T_SEMICOLON"] = regex(";");
-    token_patterns["T_EQ"] = regex("==");         // equality
-    token_patterns["T_NEQ"] = regex("!=");         // not equal
-    token_patterns["T_LT"] = regex("<");          // less than
-    token_patterns["T_GT"] = regex(">");          // greater than
-    token_patterns["T_LEQ"] = regex("<=");         // less or equal
-    token_patterns["T_GEQ"] = regex(">=");         // greater or equal
+    token_patterns["T_EQ"] = regex("==");        
+    token_patterns["T_NEQ"] = regex("!=");        
+    token_patterns["T_LT"] = regex("<");          
+    token_patterns["T_GT"] = regex(">");          
+    token_patterns["T_LEQ"] = regex("<=");        
+    token_patterns["T_GEQ"] = regex(">=");        
 
-    token_patterns["T_PLUS"] = regex("\\+");        // +
-    token_patterns["T_MINUS"] = regex("-");          // -
-    token_patterns["T_MULT"] = regex("\\*");        // *
-    token_patterns["T_DIV"] = regex("/");          // /
-    token_patterns["T_MOD"] = regex("%");          // %
+    token_patterns["T_PLUS"] = regex("\\+");      
+    token_patterns["T_MINUS"] = regex("-");         
+    token_patterns["T_MULT"] = regex("\\*");        
+    token_patterns["T_DIV"] = regex("/");          
+    token_patterns["T_MOD"] = regex("%");          
 
-    token_patterns["T_ASSIGN"] = regex("=");          // =
-    token_patterns["T_SEMICOLON"] = regex(";");          // ;
-    token_patterns["T_LPAREN"] = regex("\\(");        // (
-    token_patterns["T_RPAREN"] = regex("\\)");        // )
-    token_patterns["T_LBRACE"] = regex("\\{");        // {
-    token_patterns["T_RBRACE"] = regex("\\}");        // }
-    token_patterns["T_LBRACKET"] = regex("\\[");        // [
-    token_patterns["T_RBRACKET"] = regex("\\]");        // ]
+    token_patterns["T_ASSIGN"] = regex("=");       
+    token_patterns["T_SEMICOLON"] = regex(";");    
+    token_patterns["T_LPAREN"] = regex("\\(");      
+    token_patterns["T_RPAREN"] = regex("\\)");      
+    token_patterns["T_LBRACE"] = regex("\\{");      
+    token_patterns["T_RBRACE"] = regex("\\}");      
+    token_patterns["T_LBRACKET"] = regex("\\[");    
+    token_patterns["T_RBRACKET"] = regex("\\]");    
 
-    token_patterns["T_COMMA"] = regex(",");          // ,
-    token_patterns["T_DOT"] = regex("\\.");        // .
-    token_patterns["T_ARROW"] = regex("->");         // ->
+    token_patterns["T_COMMA"] = regex(",");         
+    token_patterns["T_DOT"] = regex("\\.");        
+    token_patterns["T_ARROW"] = regex("->");       
 
-    token_patterns["T_STRING_LITERAL"] = regex("\".*?\""); // "hello"
-    token_patterns["T_CHAR_LITERAL"] = regex("'.'");     // 'a'
-
-    
-    token_patterns["T_AND"] = regex("&&");          // &&
-    token_patterns["T_OR"] = regex("\\|\\|");      // ||
-    token_patterns["T_NOT"] = regex("!");           // !
+    token_patterns["T_STRING_LITERAL"] = regex("\".*?\""); 
+    token_patterns["T_CHAR_LITERAL"] = regex("'.'");     
 
     
-    token_patterns["T_INC"] = regex("\\+\\+");      // ++
-    token_patterns["T_DEC"] = regex("--");          // --
+    token_patterns["T_AND"] = regex("&&");          
+    token_patterns["T_OR"] = regex("\\|\\|");      
+    token_patterns["T_NOT"] = regex("!");          
 
+    
+    token_patterns["T_INC"] = regex("\\+\\+");     
+    token_patterns["T_DEC"] = regex("--");         
+    token_patterns["T_RSHIFT"] = regex(">>");
+    token_patterns["T_LSHIFT"] = regex("<<");
 
 }
 void Lexer_regex::GenerateTokens(const string&file_name )
