@@ -127,10 +127,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Lexer.h" />
+    <ClInclude Include="with_regex_Lexer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Lexer.cpp" />
+    <ClCompile Include="with_regex_Lexer.cpp" />
+    <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
