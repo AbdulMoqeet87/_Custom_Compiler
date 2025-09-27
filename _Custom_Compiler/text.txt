@@ -1,3 +1,20 @@
+string s = "hello\nworld\t\"quote\"";
+fn void tricky() {
+    // single-line comment
+     string s = "hello\nworld\t\"quote\"";
+    comment 
+ 
+    int x = 5 & 3 | 2 ^ 1;
+    int y = 3;
+    string hi = "hi";
+
+int x  = 1;
+int y = 2;
+ 
+    int bad = 5;       // invalid
+    
+}
+
 fn main() {
     int x = 42 << 5;
     float y = 3.14e-2;
@@ -17,3 +34,5 @@ fn main() {
         return param + "_suffix";
     }
 }
+
+
