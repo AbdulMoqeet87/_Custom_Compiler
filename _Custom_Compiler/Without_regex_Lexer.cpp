@@ -34,6 +34,10 @@ Without_regex_Lexer::Without_regex_Lexer()
     keywords["static"] = "T_STATIC";
     keywords["import"] = "T_IMPORT";
     keywords["then"] = "T_THEN";
+    keywords["switch"] = "T_SWITCH";
+    keywords["case"] = "T_CASE";
+    keywords["default"] = "T_DEFAULT";
+    keywords["enum"] = "T_ENUM";
 }
 
 vector<Token> Without_regex_Lexer::CreateTokens(const string &filename)
@@ -196,7 +200,7 @@ void Without_regex_Lexer::Tokenize(const string &input)
             column_number++;
             while (i < input.size() && input[i] != '"')
             {
-                if (input[i] == '\\' && i + 1 < input.size() && input[i + 1] == '"')
+                if (input[i] == '\\' && i + 1 < input.size() && (input[i + 1] == '"' ||  input[i + 1] == 'n' || input[i + 1] == 't' || input[i + 1] == 'r'))
                 {
                     strLit += input[i];
                     i++;
@@ -204,10 +208,12 @@ void Without_regex_Lexer::Tokenize(const string &input)
                     i++;
                     column_number+=2;
                 }
-                
+                else
+                {
                 strLit += input[i];
                 i++;
                 column_number++;
+                }
             }
             if (i < input.size())
             {
@@ -218,6 +224,7 @@ void Without_regex_Lexer::Tokenize(const string &input)
             }
             else
             {
+                printTokens();
                 throw runtime_error("Unterminated string literal at line " + to_string(line_number) + ", column " + to_string(sci));
             }
             continue;
@@ -460,7 +467,10 @@ void Without_regex_Lexer::Tokenize(const string &input)
         case '?':
             tokens.push_back({"T_QUESTION", "?", line_number, column_number});
             break;
-        
+        case '#':
+            tokens.push_back({"T_HASH", "#", line_number, column_number});
+            break;
+
         default:
             throw runtime_error("Unexpected character '" + string(1, currentChar) + "' at line " + to_string(line_number) + ", column " + to_string(column_number));
         }
