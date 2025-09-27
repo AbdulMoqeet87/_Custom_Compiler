@@ -127,10 +127,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AST.h" />
+    <ClInclude Include="ParseError.h" />
+    <ClInclude Include="Parser.h" />
     <ClInclude Include="Without_regex_Lexer.h" />
     <ClInclude Include="with_regex_Lexer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Parser.cpp" />
     <ClCompile Include="Without_regex_Lexer.cpp" />
     <ClCompile Include="with_regex_Lexer.cpp" />
     <ClCompile Include="Source.cpp" />

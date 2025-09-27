@@ -1,19 +1,35 @@
 #include<iostream>
 #include "Without_regex_Lexer.h"
 #include"with_regex_Lexer.h"
+#include"Parser.h"
 
 using namespace std;
 
-int main()
-{
-    Without_regex_Lexer lexer;
-    string input = "int";
-    string result = lexer.getKeywordToken(input);
-    cout << "The token for '" << input << "' is: " << result << endl;
-    vector<Token> tokens = lexer.CreateTokens("text.txt");
-    lexer.printTokens();
-    return 0;
+
+int main() {
+    // 1. Run the lexer
+    Lexer_regex lexer;
+    lexer.GenerateTokens("Text.txt");
+
+    cout << "Tokens:\n";
+    lexer.PrintTokens();
+
+    // 2. Run the parser
+    vector<token> tokens = lexer.getTokens();
+    Parser parser(tokens);
+    parser.parse();
 }
+
+//int main()
+//{
+//    Without_regex_Lexer lexer;
+//    string input = "int";
+//    string result = lexer.getKeywordToken(input);
+//    cout << "The token for '" << input << "' is: " << result << endl;
+//    vector<Token> tokens = lexer.CreateTokens("text.txt");
+//    lexer.printTokens();
+//    return 0;
+//}
 
 //int main()
 //{

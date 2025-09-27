@@ -8,6 +8,7 @@ using namespace std;
 
 
 Lexer_regex::Lexer_regex() : master(
+	// Master regex pattern to match all tokens
     "[a-zA-Z_][a-zA-Z0-9_]*|"                 
     "[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?|"
     "[0-9]+|"
@@ -28,6 +29,7 @@ Lexer_regex::Lexer_regex() : master(
 
 ) , curr_line(1), invalid_regexs{regex("[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]*")}
 {
+    // keywords
     is_comment = false;
     keywords["cout"] = "T_COUT";
     keywords["cin"] = "T_CIN";
@@ -60,32 +62,41 @@ Lexer_regex::Lexer_regex() : master(
     keywords["static"] = "T_STATIC";
     keywords["import"] = "T_IMPORT";
     keywords["then"] = "T_THEN";
-    //---------------------------------------------------
+    
     //regex defined for each token
 
     token_patterns["T_COMSTART"] = regex("/\\*");
     token_patterns["T_COMEND"] = regex("\\*/");
     token_patterns["T_IDENTIFIER"] = regex("[a-zA-Z_][a-zA-Z0-9_]*");
-    //token_patterns["T_NUMBER"] = regex("[0-9]+");
-    token_patterns["T_FLOATLIT"] = std::regex("[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?");
-    token_patterns["T_NUMBER"] = std::regex("[0-9]+");
+
+	// Literal patterns
+    token_patterns["T_FLOAT_LIT"] = regex("[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?");
+    token_patterns["T_STRING_LIT"] = regex("\".*?\"");
+    token_patterns["T_CHAR_LIT"] = regex("'.'");
+    token_patterns["T_NUMBER"] = regex("[0-9]+");
+
+	// Operator patterns
     token_patterns["T_ASSIGN"] = regex("=");
-    token_patterns["T_SEMICOLON"] = regex(";");
-    token_patterns["T_EQ"] = regex("==");        
-    token_patterns["T_NEQ"] = regex("!=");        
+    token_patterns["T_PLUS"] = regex("\\+");
+    token_patterns["T_MINUS"] = regex("-");
+    token_patterns["T_MULT"] = regex("\\*");
+    token_patterns["T_DIV"] = regex("/");
+    token_patterns["T_MOD"] = regex("%");
     token_patterns["T_LT"] = regex("<");          
-    token_patterns["T_GT"] = regex(">");          
+    token_patterns["T_GT"] = regex(">"); 
+    token_patterns["T_NOT"] = regex("!");
+    token_patterns["T_EQ"] = regex("==");
+    token_patterns["T_NEQ"] = regex("!=");
     token_patterns["T_LEQ"] = regex("<=");        
     token_patterns["T_GEQ"] = regex(">=");        
+    token_patterns["T_INC"] = regex("\\+\\+");
+    token_patterns["T_DEC"] = regex("--");
+    token_patterns["T_AND"] = regex("&&");
+    token_patterns["T_OR"] = regex("\\|\\|");
+    token_patterns["T_RSHIFT"] = regex(">>");
+    token_patterns["T_LSHIFT"] = regex("<<");
 
-    token_patterns["T_PLUS"] = regex("\\+");      
-    token_patterns["T_MINUS"] = regex("-");         
-    token_patterns["T_MULT"] = regex("\\*");        
-    token_patterns["T_DIV"] = regex("/");          
-    token_patterns["T_MOD"] = regex("%");          
-
-    token_patterns["T_ASSIGN"] = regex("=");       
-    token_patterns["T_SEMICOLON"] = regex(";");    
+	// Delimiter patterns
     token_patterns["T_LPAREN"] = regex("\\(");      
     token_patterns["T_RPAREN"] = regex("\\)");      
     token_patterns["T_LBRACE"] = regex("\\{");      
@@ -93,23 +104,10 @@ Lexer_regex::Lexer_regex() : master(
     token_patterns["T_LBRACKET"] = regex("\\[");    
     token_patterns["T_RBRACKET"] = regex("\\]");    
 
-    token_patterns["T_COMMA"] = regex(",");         
+    token_patterns["T_COMMA"] = regex(","); 
+    token_patterns["T_SEMICOLON"] = regex(";");
     token_patterns["T_DOT"] = regex("\\.");        
-    token_patterns["T_ARROW"] = regex("->");       
-
-    token_patterns["T_STRING_LITERAL"] = regex("\".*?\""); 
-    token_patterns["T_CHAR_LITERAL"] = regex("'.'");     
-
-    
-    token_patterns["T_AND"] = regex("&&");          
-    token_patterns["T_OR"] = regex("\\|\\|");      
-    token_patterns["T_NOT"] = regex("!");          
-
-    
-    token_patterns["T_INC"] = regex("\\+\\+");     
-    token_patterns["T_DEC"] = regex("--");         
-    token_patterns["T_RSHIFT"] = regex(">>");
-    token_patterns["T_LSHIFT"] = regex("<<");
+    token_patterns["T_ARROW"] = regex("->");   
 
 }
 void Lexer_regex::GenerateTokens(const string&file_name )
@@ -183,6 +181,10 @@ void Lexer_regex::IsInvalidLexeme(const string& Lexeme)
     }
 }
 
+vector<token> Lexer_regex::getTokens()
+{
+    return tokens;
+}
 
 void Lexer_regex::PrintTokens()
 {
