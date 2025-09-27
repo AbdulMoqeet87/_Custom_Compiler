@@ -9,13 +9,15 @@ token Parser::peek() // look at the current token without consuming it
 
 token Parser::advance() // consume the current token and return it
 {
-    if (!isAtEnd()) current++;
+    if (!isAtEnd()) 
+        current++;
     return tokens[current - 1];
 }
 
 bool Parser::check(const string& type) // check if the current token matches the expected type
 {
-    if (isAtEnd()) return false;
+    if (isAtEnd()) 
+        return false;
     return peek().type == type;
 }
 
@@ -37,35 +39,81 @@ bool Parser::isAtEnd() // check if we've reached the end of the token list
     return current >= tokens.size();
 }
 
-Stmt* Parser::exprStatement()
+Expr* Parser::primary() // literals, identifiers, and ( expression )
 {
-    Expr* expr = expression();
-    if (!match({ "T_SEMICOLON" }))
-        throw ParseError::UnexpectedToken(peek());
-    return new ExprStmt(expr);
-}
-
-Expr* Parser::primary() // literals and identifiers
-{
-    if (match({ "T_CHAR_LIT" })) 
-        return new LiteralExpr(tokens[current - 1].val, "char");
-    if (match({ "T_FLOAT_LIT" })) 
-        return new LiteralExpr(tokens[current - 1].val, "float");
-    if (match({ "T_STRING_LIT" })) 
-        return new LiteralExpr(tokens[current - 1].val, "string");
     if (match({ "T_IDENTIFIER" })) 
         return new IdentifierExpr(tokens[current - 1].val);
+
+    // literal
+    if (match({ "T_NUMBER" }))
+        return new LiteralExpr(tokens[current - 1].val, "int");
+    if (match({ "T_FLOAT_LIT" }))
+        return new LiteralExpr(tokens[current - 1].val, "float");
+    if (match({ "T_STRING_LIT" }))
+        return new LiteralExpr(tokens[current - 1].val, "string");
+    if (match({ "T_CHAR_LIT" }))
+        return new LiteralExpr(tokens[current - 1].val, "char");
+
+    if (match({"T_LBRACE"}))
+    {
+        current--;
+        Expr* expr= expression();
+
+        if(!match({"T_RBRACE"}))
+			throw ParseError::UnexpectedToken(peek());
+
+		return expr;
+	}
 
     throw ParseError::ExpectedExpr();
 }
 
+vector<Expr*> Parser::arguments()
+{
+    vector<Expr*> args;
+    if (!check("T_RPAREN"))
+    {
+        do
+        {
+            args.push_back(expression());
+        } while (match({ "T_COMMA" }));
+    }
+	return args;
+}
+
+Expr* Parser::call()
+{
+    // call ? primary ( "(" arguments? ")" )* ;
+	Expr* retType = primary();
+
+    if(match({"T_LPAREN"}))
+    {
+        vector<Expr*> args = arguments();
+        if (!match({ "T_RPAREN" }))
+            throw ParseError::UnexpectedToken(peek());
+
+		return new callExpr(dynamic_cast<IdentifierExpr*>(retType)->name, args);
+    }
+}
+
+Expr* Parser::unary() // handles unary operations like - and !
+{
+    if (match({ "T_NOT" }))
+    {
+        string op = tokens[current - 1].val;
+        Expr* right = unary();
+        return new BinaryExpr(new LiteralExpr("0", "int"), op, right); // e.g., -a becomes 0 - a
+    }
+    return call();
+}
+
 Expr* Parser::factor()  // handles * and / operations
 {
-    Expr* expr = primary();
+    Expr* expr = unary();
     while (match({ "T_MULT", "T_DIV" })) 
     {
         string op = tokens[current - 1].val;
-        Expr* right = primary();
+        Expr* right = unary();
         expr = new BinaryExpr(expr, op, right);
     }
     return expr;
@@ -83,10 +131,11 @@ Expr* Parser::term()  // handles + and - operations
     return expr;
 }
 
-Expr* Parser::equality()  // handles == and != operations
+Expr* Parser::comparison()  // handles <, >, <=, >= operations
 {
+    // comparison    ? term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     Expr* expr = term();
-    while (match({ "T_EQ", "T_NEQ" })) 
+    while (match({ "T_LT", "T_LEQ", "T_GT", "T_GEQ" })) 
     {
         string op = tokens[current - 1].val;
         Expr* right = term();
@@ -95,9 +144,78 @@ Expr* Parser::equality()  // handles == and != operations
     return expr;
 }
 
+Expr* Parser::equality()  // handles == and != operations
+{
+	Expr* expr = comparison();
+
+    while (match({ "T_EQ", "T_NEQ" })) 
+    {
+        string op = tokens[current - 1].val;
+        Expr* right = comparison();
+        expr = new BinaryExpr(expr, op, right);
+	}
+	return expr;
+}
+
+Expr* Parser::logicalAnd()
+{
+    Expr* expr = equality();
+    while (match({ "T_AND" })) 
+    {
+        string op = tokens[current - 1].val;
+        Expr* right = equality();
+        expr = new BinaryExpr(expr, op, right);
+    }
+	return expr;
+}
+
+Expr* Parser::logicalOr()
+{
+    Expr* expr = logicalAnd();
+    while (match({ "T_OR" })) 
+    {
+        string op = tokens[current - 1].val;
+        Expr* right = logicalAnd();
+        expr = new BinaryExpr(expr, op, right);
+    }
+    return expr;
+}
+
+Expr* Parser::assignment() // handles assignment operations
+{
+    
+    if (match({ "T_IDENTIFIER" }))
+    {
+        Expr* left = nullptr;
+        left = new IdentifierExpr(tokens[current - 1].val);
+
+        if (match({ "T_ASSIGN" }))
+        {
+            string op = tokens[current - 1].val;
+            Expr* right = assignment();
+            if (IdentifierExpr* id = dynamic_cast<IdentifierExpr*>(left))
+            {
+                return new BinaryExpr(left, op, right);
+            }
+			throw ParseError::ExpectedExpr();
+        }
+        
+    }
+
+	return logicalOr();
+}
+
 Expr* Parser::expression()  // checks for equality first
 {
-    return equality();
+	return assignment();
+}
+
+Stmt* Parser::exprStatement()
+{
+    Expr* expr = expression();
+    if (!match({ "T_SEMICOLON" }))
+        throw ParseError::UnexpectedToken(peek());
+    return new ExprStmt(expr);
 }
 
 Block* Parser::block() 
@@ -118,11 +236,10 @@ Block* Parser::block()
     return block;
 }
 
-vector<string> Parser::paramaeters() //function parameters
+vector<string> Parser::parameters() //function parameters
 {
     vector<string> params;
 
-    // Parse parameter list
     if (!check("T_RPAREN"))
     {
         do
@@ -153,7 +270,7 @@ Stmt* Parser::funcDeclaration()
     if (!match({ "T_LPAREN" }))
         throw ParseError::ExpectedTypeToken(); // Expect '('
 
-	vector<string> params = paramaeters();
+	vector<string> params = parameters();
 
     Block* body = block();
     return new funcDecl(name, params, body);

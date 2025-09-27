@@ -53,13 +53,31 @@ struct BinaryExpr : Expr  // e.g., a + b, x * y that requires two operands
     }
 };
 
+struct callExpr : Expr // function call
+{
+    string functionName;
+    vector<Expr*> arguments;
+    callExpr(const string& fn, const vector<Expr*>& args) : functionName(fn), arguments(args) {}
+    ~callExpr()
+    {
+        for (auto arg : arguments)
+            delete arg;
+    }
+    void print(int indent = 0) const override
+    {
+        cout << string(indent, ' ') << "CallExpr(" << functionName << ")\n";
+        for (auto arg : arguments)
+            arg->print(indent + 2);
+    }
+};
+
 struct Stmt
 {
     virtual ~Stmt() {}
     virtual void print(int indent = 0) const = 0;
 };
 
-struct ExprStmt : Stmt // expression used as a statement, e.g., function call
+struct ExprStmt : Stmt // expression used as a statement,
 {
     Expr* expr;
     ExprStmt(Expr* e) : expr(e) {}
@@ -228,6 +246,21 @@ struct SwitchStmt : Stmt // switch statement
     }
 };
 
+struct Program // complete source code
+{
+    vector<Stmt*> statements;
+    ~Program()
+    {
+        for (auto s : statements)
+            delete s;
+    }
+    void print() const
+    {
+        cout << "Program\n";
+        for (auto stmt : statements) stmt->print(2);
+    }
+};
+
 struct Block : Stmt // a sequence of statements in e.g if, while, function body
 {
     vector<Stmt*> statements;
@@ -244,20 +277,6 @@ struct Block : Stmt // a sequence of statements in e.g if, while, function body
     }
 };
 
-struct Program // complete source code
-{
-    vector<Stmt*> statements;
-    ~Program()
-    {
-        for (auto s : statements)
-            delete s;
-    }
-    void print() const
-    {
-        cout << "Program\n";
-        for (auto stmt : statements) stmt->print(2);
-    }
-};
 
 struct VarDecl : Stmt
 {

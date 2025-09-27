@@ -20,17 +20,12 @@ private:
     bool isAtEnd();
 
     // Grammar rules
-    Expr* expression(); // like e.g a + b * c
-    Expr* equality(); // like e.g a == b, a != b
-    Expr* term(); // like e.g a + b, a - b
-    Expr* factor(); // like e.g a * b, a / b
-    Expr* primary(); // like e.g 123, 45.67, "hello", true, false, identifier
-
+    
     Stmt* declaration(); // 
     Block* block();
     Stmt* varDeclaration();
     Stmt* funcDeclaration();
-    vector<string> paramaeters();
+    vector<string> parameters();
     vector<string> type();
     Stmt* statement();
 	Stmt* exprStatement();
@@ -40,4 +35,16 @@ private:
 	Stmt* forStatement();
 	Stmt* breakStatement();
     Stmt* switchStatement();
+    Expr* expression(); // like e.g a + b * c
+	Expr* assignment();
+	Expr* logicalOr(); // like e.g a || b
+	Expr* logicalAnd(); // like e.g a && b
+	Expr* comparison(); // like e.g a < b, a > b, a <= b, a >= b
+    Expr* equality(); // like e.g a == b, a != b
+    Expr* term(); // like e.g a + b, a - b
+    Expr* factor(); // like e.g a * b, a / b
+	Expr* unary(); // like e.g -a, !b
+	Expr* call(); // function call
+	vector<Expr*> arguments();
+    Expr* primary(); // like e.g 123, 45.67, "hello", true, false, identifier
 };
