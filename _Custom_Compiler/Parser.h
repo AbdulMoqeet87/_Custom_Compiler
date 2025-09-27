@@ -32,4 +32,12 @@ private:
     Stmt* funcDeclaration();
     vector<string> paramaeters();
     vector<string> type();
+    Stmt* statement();
+	Stmt* exprStatement();
+    Stmt* ifStatement();
+	Stmt* whileStatement();
+	Stmt* returnStatement();
+	Stmt* forStatement();
+	Stmt* breakStatement();
+    Stmt* switchStatement();
 };

@@ -37,7 +37,13 @@ bool Parser::isAtEnd() // check if we've reached the end of the token list
     return current >= tokens.size();
 }
 
-
+Stmt* Parser::exprStatement()
+{
+    Expr* expr = expression();
+    if (!match({ "T_SEMICOLON" }))
+        throw ParseError::UnexpectedToken(peek());
+    return new ExprStmt(expr);
+}
 
 Expr* Parser::primary() // literals and identifiers
 {
@@ -174,7 +180,7 @@ Stmt* Parser::varDeclaration()
     {
         throw ParseError::ExpectedTypeToken();
     }
-    string type = tokens[current - 1].type;
+    string type = tokens[current - 1].val;
 
     if (!match({ "T_IDENTIFIER" })) 
     {
@@ -207,7 +213,189 @@ Stmt* Parser::declaration()
         return funcDeclaration();
     }
 
-    return varDeclaration();
+	return varDeclaration(); // default to variable declaration
+}
+
+Stmt* Parser::ifStatement() 
+{
+    if(match({ "T_IF" }))
+    {
+        if (!match({ "T_LPAREN" }))
+            throw ParseError::UnexpectedToken(peek());
+        Expr* condition = expression();
+        if (!match({ "T_RPAREN" }))
+            throw ParseError::UnexpectedToken(peek());
+        Stmt* thenBranch = statement();
+        Stmt* elseBranch = nullptr;
+        if (match({ "T_ELSE" })) 
+        {
+            elseBranch = statement();
+        }
+        return new IfStmt(condition, thenBranch, elseBranch);
+	}
+	throw ParseError::UnexpectedToken(peek());
+}
+
+Stmt* Parser::whileStatement() 
+{
+    if (match({ "T_LPAREN" }))
+    {
+        Expr* condition = expression();
+        if (!match({ "T_RPAREN" }))
+            throw ParseError::UnexpectedToken(peek());
+		if (match({ "T_SEMICOLON" }))
+			throw ParseError::UnexpectedToken(peek());
+        if (match({ "T_RBRACE" }))
+        {
+            Stmt* body = statement();
+            if(!match({ "T_RBRACE" }))
+				throw ParseError::UnexpectedToken(peek());
+            return new WhileStmt(condition, body);
+        }
+    }
+	throw ParseError::UnexpectedToken(peek());
+}
+
+Stmt* Parser::returnStatement() 
+{
+	Expr* expr = nullptr;
+    if (match({ "T_SEMICOLON" })) // 
+        return new ReturnStmt(expr); // void return
+    expr = expression();
+    if (!match({ "T_SEMICOLON" }))
+        throw ParseError::UnexpectedToken(peek());
+	return new ReturnStmt(expr);
+}
+
+Stmt* Parser::forStatement() 
+{
+    if (match({ "T_LPAREN" }))
+    {
+        Stmt* init = declaration(); // initialization
+        if(!match({ "T_SEMICOLON" }))
+            throw ParseError::ExpectedForLoopParts();
+
+        Expr* condition = expression(); // condition
+        if (!match({ "T_SEMICOLON" }))
+            throw ParseError::ExpectedForLoopParts();
+
+        Expr* update = expression(); // increment
+
+        if (!match({ "T_RPAREN" }))
+            throw ParseError::ExpectedForLoopParts();
+
+        Stmt* body = nullptr;
+
+        if (match({ "T_LBRACE" }))
+        {
+            body = statement(); // loop body
+
+            if (!match({ "T_RBRACE" }))
+                throw ParseError::UnexpectedToken(peek());
+			return new ForStmt(init, condition, update, body);
+        }
+        else 
+        {
+            body = statement(); // loop body
+            return new ForStmt(init, condition, update, body);
+        }
+
+		throw ParseError::UnexpectedToken(peek());
+        
+    }
+}
+
+Stmt* Parser::breakStatement()
+{
+    if (!match({ "T_SEMICOLON" }))
+        throw ParseError::UnexpectedToken(peek());
+    return new BreakStmt();
+}
+
+Stmt* Parser::switchStatement()
+{
+    if(match({ "T_LPAREN" }))
+    {
+        Expr* expr = expression();
+        if (!match({ "T_RPAREN" }))
+            throw ParseError::UnexpectedToken(peek());
+
+        if (!match({ "T_LBRACE" }))
+            throw ParseError::UnexpectedToken(peek());
+
+        vector<pair<Expr*, Stmt*>> cases;
+        Stmt* defaultCase = nullptr;
+
+        while (!check("T_RBRACE") && !isAtEnd())
+        {
+            if (match({ "T_CASE" }))
+            {
+                Expr* caseExpr = expression();
+                if (!match({ "T_COLON" }))
+                    throw ParseError::UnexpectedToken(peek());
+                Stmt* caseStmt = statement();
+                cases.push_back({ caseExpr, caseStmt });
+                if(match({ "T_BREAK" }))
+                {
+                    if (!match({ "T_SEMICOLON" }))
+                        throw ParseError::UnexpectedToken(peek());
+				}
+                else if (match({ "T_CONTINUE" }))
+                {
+                    if (!match({ "T_SEMICOLON" }))
+                        throw ParseError::UnexpectedToken(peek());
+                }
+            }
+            else if (match({ "T_DEFAULT" }))
+            {
+                if (!match({ "T_COLON" }))
+                    throw ParseError::UnexpectedToken(peek());
+                defaultCase = statement();
+                if (match({ "T_BREAK" }))
+                {
+                    if (!match({ "T_SEMICOLON" }))
+                        throw ParseError::UnexpectedToken(peek());
+                }
+                else if (match({ "T_CONTINUE" }))
+                {
+                    if (!match({ "T_SEMICOLON" }))
+                        throw ParseError::UnexpectedToken(peek());
+				}
+            }
+            else
+            {
+                throw ParseError::UnexpectedToken(peek());
+            }
+        }
+        if (!match({ "T_RBRACE" }))
+            throw ParseError::UnexpectedToken(peek());
+
+        return new SwitchStmt(expr, cases, defaultCase);
+	}
+
+	throw ParseError::UnexpectedToken(peek());
+}
+
+Stmt* Parser::statement() 
+{
+    if (match({ "T_IF" })) 
+        return ifStatement();
+    if (match({ "T_FOR" }))
+        return forStatement();
+    if (match({ "T_WHILE" })) 
+        return whileStatement();
+    if (match({ "T_SWITCH" }))
+        return switchStatement();
+    if (match({ "T_BREAK" }))
+        return breakStatement();
+    if (match({ "T_RETURN" })) 
+        return returnStatement();
+    if (match({"T_CONTINUE"}))
+		return breakStatement();
+    if (match({ "T_LBRACE" })) 
+        return block();
+
+    return exprStatement();
 }
 
 Program* Parser::parseProgram()  // parse the complete source code

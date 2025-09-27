@@ -52,4 +52,9 @@ public:
     {
         return ParseError("Expected an expression.");
     }
+    // for loop
+    static ParseError ExpectedForLoopParts()
+    {
+        return ParseError("Expected for loop parts: initialization, condition, increment.");
+	}
 };
