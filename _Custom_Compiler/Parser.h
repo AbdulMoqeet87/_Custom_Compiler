@@ -10,7 +10,7 @@ class Parser
     size_t current = 0;
 public:
     Parser(const vector<token>& t) : tokens(t) {}
-    Program* parse();
+    Program* parseProgram();
 private:
     // Helpers
     token peek();
@@ -26,9 +26,10 @@ private:
     Expr* factor(); // like e.g a * b, a / b
     Expr* primary(); // like e.g 123, 45.67, "hello", true, false, identifier
 
-    Stmt* declaration();
+    Stmt* declaration(); // 
     Block* block();
-    Stmt* statement();
     Stmt* varDeclaration();
     Stmt* funcDeclaration();
+    vector<string> paramaeters();
+    vector<string> type();
 };

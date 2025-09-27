@@ -17,7 +17,7 @@ int main() {
     // 2. Run the parser
     vector<token> tokens = lexer.getTokens();
     Parser parser(tokens);
-    parser.parse();
+    parser.parseProgram();
 }
 
 //int main()
