@@ -34,7 +34,7 @@ class Lexer_regex
 public:
 	Lexer_regex();
 	vector<token> getTokens();
-	void GenerateTokens(const string& code);
+	vector<token> GenerateTokens(const string& code);
 	void IsInvalidLexeme(const string& Lexeme);
 	void PrintTokens();
 	bool IsCommentStarting(const string& s);

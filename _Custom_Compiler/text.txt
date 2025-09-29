@@ -1,38 +1,5 @@
-string s = "hello\nworld\t\"quote\"";
-fn void tricky() {
-    // single-line comment
-     string s = "hello\nworld\t\"quote\"";
-    comment 
- 
-    int x = 5 & 3 | 2 ^ 1;
-    int y = 3;
-    string hi = "hi";
-
-int x  = 1;
-int y = 2;
- 
-    int bad = 5;       // invalid
-    
+ int abc(int x)   
+{
+	int h = "h";
+    return 0;
 }
-
-fn main() {
-    int x = 42 << 5;
-    float y = 3.14e-2;
-    bool flag = x != 0 && y > 0.0;
-    string msg = "Hello World";
-    */
-    if (flag) {
-        for (int i = 0; i < 10; i = i + 1) {
-            x = x + i;
-            y = y * 1.5;
-        }
-    } else {
-        return x;
-    }
-*/
-    fn nested_fn(string param) { //if so can
-        return param + "_suffix";
-    }
-}
-
-

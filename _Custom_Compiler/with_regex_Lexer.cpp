@@ -110,12 +110,14 @@ Lexer_regex::Lexer_regex() : master(
     token_patterns["T_ARROW"] = regex("->");   
 
 }
-void Lexer_regex::GenerateTokens(const string&file_name )
+vector<token> Lexer_regex::GenerateTokens(const string&file_name )
 {
+
     ifstream rdr(file_name);
     if (!rdr)
         throw runtime_error("Could not open file!");
 
+    
     string code;
     while (getline(rdr, code)) 
     {
@@ -166,6 +168,7 @@ void Lexer_regex::GenerateTokens(const string&file_name )
         }
         curr_line++;
     }
+    return tokens;
 }
 void Lexer_regex::IsInvalidLexeme(const string& Lexeme)
 {
