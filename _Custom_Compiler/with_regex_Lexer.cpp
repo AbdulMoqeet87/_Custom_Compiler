@@ -10,7 +10,7 @@ using namespace std;
 Lexer_regex::Lexer_regex() : master(
     // Master regex pattern to match all tokens
     "[a-zA-Z_][a-zA-Z0-9_]*|"
-    "[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?|"
+    "[0-9]+\\.[0-9]+([eE][+-]?[0-9]+)?|"
     "[0-9]+|"
     "[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]*|"
     "//|"
@@ -27,6 +27,8 @@ Lexer_regex::Lexer_regex() : master(
     "\\+\\+|"
     "--|"
     "%|:"
+
+
 
 ), curr_line(1), invalid_regexs{ regex("[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]*") }
 {
@@ -104,15 +106,11 @@ Lexer_regex::Lexer_regex() : master(
     token_patterns["T_RBRACE"] = regex("\\}");
     token_patterns["T_LBRACKET"] = regex("\\[");
     token_patterns["T_RBRACKET"] = regex("\\]");
-    token_patterns["T_COLON"] = regex(":");
-    token_patterns["T_QUESTION"] = regex("\\?");
 
     token_patterns["T_COMMA"] = regex(",");
     token_patterns["T_SEMICOLON"] = regex(";");
     token_patterns["T_DOT"] = regex("\\.");
     token_patterns["T_ARROW"] = regex("->");
-    token_patterns["T_Colon"] = regex(":");
-
 
 }
 vector<token> Lexer_regex::GenerateTokens(const string& file_name)
