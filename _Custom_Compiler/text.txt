@@ -1,9 +1,10 @@
 
-int add(int a, int b) {
+// Hello
 
-int result = a / b;
-	if(a==b || b==a)
-		{ result = a*b; }
+/* int x=5;*/
 
-    return result;
+int func(int a, int b)
+{
+	string c= "abx";
+return c;
 }

@@ -13,6 +13,7 @@ Lexer_regex::Lexer_regex() : master(
     "[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?|"
     "[0-9]+|"
     "[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]*|"         
+    "//|"
     "'(\\\\.|[^'\\\\])'|"                    
     "\"([^\"\\\\]|\\\\.)*\"|"                  
     "==|=|;|,|"                                
@@ -25,6 +26,7 @@ Lexer_regex::Lexer_regex() : master(
     "!|"           
     "\\+\\+|"      
     "--|"
+    
      
 
 ) , curr_line(1), invalid_regexs{regex("[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]*")}
@@ -127,6 +129,9 @@ vector<token> Lexer_regex::GenerateTokens(const string&file_name )
         while (iter != end)
         {
             string line = iter->str();
+            if (line == "//") 
+                break;
+
             if (is_comment && line == "*/")
                 is_comment = false;
             if (!is_comment)
