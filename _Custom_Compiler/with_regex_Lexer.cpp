@@ -9,22 +9,25 @@ using namespace std;
 
 Lexer_regex::Lexer_regex() : master(
 	// Master regex pattern to match all tokens
+	"//.*|" // single line comments
+	"/\\*|\\*/|" // multi-line comment delimiters
+
     "[a-zA-Z_][a-zA-Z0-9_]*|"                 
-    "[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?|"
+    "[0-9]+\\.[0-9]+([eE][+-]?[0-9]+)?|"
     "[0-9]+|"
-    "[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]*|"         
+    //"[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]*|"         
     "'(\\\\.|[^'\\\\])'|"                    
     "\"([^\"\\\\]|\\\\.)*\"|"                  
     "==|=|;|,|"                                
     "\\(|\\)|\\{|\\}|"
     ">>|<<|!=|<=|>=|<|>|"
     "/\\*|\\*/|"
-    "\\+|\\-|\\*|/"
+    "\\+|\\-|\\*|/|%|"
     "&&|"          
     "\\|\\||"      
     "!|"           
     "\\+\\+|"      
-    "--|"
+    "--"
      
 
 ) , curr_line(1), invalid_regexs{regex("[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]*")}
@@ -34,7 +37,10 @@ Lexer_regex::Lexer_regex() : master(
     keywords["cout"] = "T_COUT";
     keywords["cin"] = "T_CIN";
     keywords["int"] = "T_INT";
-    keywords["main"] = "T_MAIN";
+    //keywords["main"] = "T_MAIN";
+	keywords["char"] = "T_CHAR";
+	keywords["short"] = "T_SHORT";
+	keywords["long"] = "T_LONG";
     keywords["float"] = "T_FLOAT";
     keywords["double"] = "T_DOUBLE";
     keywords["string"] = "T_STRING";
@@ -64,19 +70,24 @@ Lexer_regex::Lexer_regex() : master(
     keywords["then"] = "T_THEN";
     
     //regex defined for each token
-
+    token_patterns["T_SINGLE_COMMENT"] = regex("//.*");
     token_patterns["T_COMSTART"] = regex("/\\*");
     token_patterns["T_COMEND"] = regex("\\*/");
     token_patterns["T_IDENTIFIER"] = regex("[a-zA-Z_][a-zA-Z0-9_]*");
 
 	// Literal patterns
-    token_patterns["T_FLOAT_LIT"] = regex("[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?");
-    token_patterns["T_STRING_LIT"] = regex("\".*?\"");
-    token_patterns["T_CHAR_LIT"] = regex("'.'");
+    token_patterns["T_FLOAT_LIT"] = regex("[0-9]+\\.[0-9]+([eE][+-]?[0-9]+)?");
+
+    //token_patterns["T_STRING_LIT"] = regex("\".*?\"");
+    token_patterns["T_STRING_LIT"] = regex("\"([^\"\\\\]|\\\\.)*\"");
+
+    //token_patterns["T_CHAR_LIT"] = regex("'.'");
+    token_patterns["T_CHAR_LIT"] = regex("'(\\\\.|[^'\\\\])'");
     token_patterns["T_NUMBER"] = regex("[0-9]+");
 
 	// Operator patterns
     token_patterns["T_ASSIGN"] = regex("=");
+    token_patterns["T_MOD"] = regex("%");
     token_patterns["T_PLUS"] = regex("\\+");
     token_patterns["T_MINUS"] = regex("-");
     token_patterns["T_MULT"] = regex("\\*");
@@ -95,6 +106,8 @@ Lexer_regex::Lexer_regex() : master(
     token_patterns["T_OR"] = regex("\\|\\|");
     token_patterns["T_RSHIFT"] = regex(">>");
     token_patterns["T_LSHIFT"] = regex("<<");
+    token_patterns["T_COLON"] = regex(":");
+    token_patterns["T_QUESTION"] = regex("\\?");
 
 	// Delimiter patterns
     token_patterns["T_LPAREN"] = regex("\\(");      
@@ -110,54 +123,94 @@ Lexer_regex::Lexer_regex() : master(
     token_patterns["T_ARROW"] = regex("->");   
 
 }
-vector<token> Lexer_regex::GenerateTokens(const string&file_name )
-{
 
+vector<token> Lexer_regex::GenerateTokens(const string& file_name)
+{
     ifstream rdr(file_name);
     if (!rdr)
         throw runtime_error("Could not open file!");
 
-    
+    tokens.clear(); // Clear any previous tokens
+    curr_line = 1;
+
     string code;
-    while (getline(rdr, code)) 
+    while (getline(rdr, code))
     {
         sregex_iterator iter(code.begin(), code.end(), master);
         sregex_iterator end;
 
         while (iter != end)
         {
-            string line = iter->str();
-            if (is_comment && line == "*/")
-                is_comment = false;
-            if (!is_comment)
-            {
-                try
-                {
-                    IsInvalidLexeme(line);
+            string lexeme = iter->str();
+
+            // Handle single-line comments
+            if (lexeme.find("//") == 0) {
+                // Skip the entire rest of the line - it's a comment
+                break;
+            }
+
+            // Handle block comments
+            if (is_comment) {
+                if (lexeme == "*/") {
+                    is_comment = false;
                 }
-                catch (const runtime_error& e)
-                {
-                    cout << "Error caught: " << e.what() << line << " at line NO: " << curr_line << endl;
-                    exit(0);
+                // Skip everything else in block comment
+                iter++;
+                continue;
+            }
+
+            if (lexeme == "/*") {
+                is_comment = true;
+                iter++;
+                continue;
+            }
+
+            // Skip empty tokens
+            if (lexeme.empty()) {
+                iter++;
+                continue;
+            }
+
+            try {
+                IsInvalidLexeme(lexeme);
+            }
+            catch (const runtime_error& e) {
+                cout << "Error caught: " << e.what() << " '" << lexeme
+                    << "' at line NO: " << curr_line << endl;
+                exit(0);
+            }
+
+            // Check keywords first
+            if (keywords.find(lexeme) != keywords.end()) {
+                token temp(keywords[lexeme], lexeme, curr_line);
+                tokens.push_back(temp);
+            }
+            else {
+                bool matched = false;
+                // Check specific patterns first for priority
+                vector<string> priorityPatterns = {
+                    "T_FLOAT_LIT", "T_STRING_LIT", "T_CHAR_LIT", "T_NUMBER"
+                };
+
+                for (auto& patternName : priorityPatterns) {
+                    if (regex_match(lexeme, token_patterns[patternName])) {
+                        token temp(patternName, lexeme, curr_line);
+                        tokens.push_back(temp);
+                        matched = true;
+                        break;
+                    }
                 }
 
-                if (keywords.find(line) != keywords.end())
-                {
-                    token temp(keywords[line], line, curr_line);
-                    tokens.push_back(temp);
-                }
-                else
-                {
-                    for (auto& entry : token_patterns)
-                    {
-                        if (regex_match(line, entry.second))
-                        {
-                            if (IsCommentStarting(entry.first))
-                            {
-                                is_comment = true;
-
+                if (!matched) {
+                    for (auto& entry : token_patterns) {
+                        if (regex_match(lexeme, entry.second)) {
+                            // Skip comment tokens - they're already handled
+                            if (entry.first == "T_SINGLE_COMMENT" ||
+                                entry.first == "T_COMSTART" ||
+                                entry.first == "T_COMEND") {
+                                break;
                             }
-                            token temp(entry.first, line, curr_line);
+                            token temp(entry.first, lexeme, curr_line);
                             tokens.push_back(temp);
                             break;
                         }
@@ -170,6 +223,7 @@ vector<token> Lexer_regex::GenerateTokens(const string&file_name )
     }
     return tokens;
 }
+
 void Lexer_regex::IsInvalidLexeme(const string& Lexeme)
 {
     /*regex r = regex("[0-9]+[a-zA-Z_][a-zA-Z0-9_]*|");

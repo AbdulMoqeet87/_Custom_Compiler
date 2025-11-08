@@ -1,5 +1,22 @@
- int abc(int x)   
-{
-	int h = "h";
+// Test 11: Your original functions
+int swap(int n1, int n2) {
+    int temp = n1;
+    n1 = n2;
+    n2 = temp;
+    return 0;
+}
+
+float calculate(float a, float b) {
+    return a + b;
+}
+
+void printHello() {
+    int x = 5;
+}
+
+int main() {
+    int a = 10;
+    int b = 20;
+    swap(a, b);
     return 0;
 }
