@@ -53,11 +53,11 @@ int main()
 		pars->print();
 
 	}
-	catch (const std::exception&e)
+	catch (const std::exception& e)
 	{
 		cout << e.what();
 	}
-    
-    return 0;
+
+	return 0;
 
 }

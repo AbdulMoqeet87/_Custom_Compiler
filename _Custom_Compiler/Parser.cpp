@@ -1,27 +1,27 @@
 //#include "Parser.h"
 //
-//token Parser::peek() // look at the current token without consuming it
+//token Parser::peek()
 //{
 //    if (current >= tokens.size())
 //        return token("EOF", "", -1);
 //    return tokens[current];
 //}
 //
-//token Parser::advance() // consume the current token and return it
+//token Parser::advance()
 //{
-//    if (!isAtEnd()) 
+//    if (!isAtEnd())
 //        current++;
 //    return tokens[current - 1];
 //}
 //
-//bool Parser::check(const string& type) // check if the current token matches the expected type
+//bool Parser::check(const string& type)
 //{
-//    if (isAtEnd()) 
+//    if (isAtEnd())
 //        return false;
 //    return peek().type == type;
 //}
 //
-//bool Parser::match(const vector<string>& types) // if the current token matches any in types, consume it and return true
+//bool Parser::match(const vector<string>& types)
 //{
 //    for (auto& t : types)
 //    {
@@ -34,17 +34,17 @@
 //    return false;
 //}
 //
-//bool Parser::isAtEnd() // check if we've reached the end of the token list
+//bool Parser::isAtEnd()
 //{
 //    return current >= tokens.size();
 //}
 //
-//Expr* Parser::primary() // literals, identifiers, and ( expression )
+//Expr* Parser::primary()
 //{
-//    if (match({ "T_IDENTIFIER" })) 
+//    if (match({ "T_IDENTIFIER" }))
 //        return new IdentifierExpr(tokens[current - 1].val);
 //
-//    // literal
+//    // Literals
 //    if (match({ "T_NUMBER" }))
 //        return new LiteralExpr(tokens[current - 1].val, "int");
 //    if (match({ "T_FLOAT_LIT" }))
@@ -53,17 +53,17 @@
 //        return new LiteralExpr(tokens[current - 1].val, "string");
 //    if (match({ "T_CHAR_LIT" }))
 //        return new LiteralExpr(tokens[current - 1].val, "char");
+//    if (match({ "T_TRUE", "T_FALSE" }))
+//        return new LiteralExpr(tokens[current - 1].val, "bool");
 //
-//    if (match({"T_LBRACE"}))
+//    // Parentheses
+//    if (match({ "T_LPAREN" }))
 //    {
-//        current--;
-//        Expr* expr= expression();
-//
-//        if(!match({"T_RBRACE"}))
-//			throw ParseError::UnexpectedToken(peek());
-//
-//		return expr;
-//	}
+//        Expr* expr = expression();
+//        if (!match({ "T_RPAREN" }))
+//            throw ParseError::UnexpectedToken(peek());
+//        return expr;
+//    }
 //
 //    throw ParseError::ExpectedExpr();
 //}
@@ -78,39 +78,46 @@
 //            args.push_back(expression());
 //        } while (match({ "T_COMMA" }));
 //    }
-//	return args;
+//    return args;
 //}
 //
 //Expr* Parser::call()
 //{
-//    // call ? primary ( "(" arguments? ")" )* ;
-//	Expr* retType = primary();
+//    Expr* expr = primary();
 //
-//    if(match({"T_LPAREN"}))
+//    // Handle function calls and method calls
+//    while (match({ "T_LPAREN" }))
 //    {
 //        vector<Expr*> args = arguments();
 //        if (!match({ "T_RPAREN" }))
 //            throw ParseError::UnexpectedToken(peek());
 //
-//		return new callExpr(dynamic_cast<IdentifierExpr*>(retType)->name, args);
+//        if (IdentifierExpr* id = dynamic_cast<IdentifierExpr*>(expr)) {
+//            expr = new callExpr(id->name, args);
+//        }
+//        // You might want to handle other cases like method calls: obj.func()
+//        else {
+//            throw ParseError::ExpectedIdentifier();
+//        }
 //    }
+//    return expr;
 //}
 //
-//Expr* Parser::unary() // handles unary operations like - and !
+//Expr* Parser::unary()
 //{
-//    if (match({ "T_NOT" }))
+//    if (match({ "T_NOT", "T_MINUS", "T_MOF"}))
 //    {
 //        string op = tokens[current - 1].val;
 //        Expr* right = unary();
-//        return new BinaryExpr(new LiteralExpr("0", "int"), op, right); // e.g., -a becomes 0 - a
+//        return new UnaryExpr(op, right);
 //    }
 //    return call();
 //}
 //
-//Expr* Parser::factor()  // handles * and / operations
+//Expr* Parser::factor()
 //{
 //    Expr* expr = unary();
-//    while (match({ "T_MULT", "T_DIV" })) 
+//    while (match({ "T_MULT", "T_DIV", "T_MOD"}))
 //    {
 //        string op = tokens[current - 1].val;
 //        Expr* right = unary();
@@ -119,10 +126,10 @@
 //    return expr;
 //}
 //
-//Expr* Parser::term()  // handles + and - operations
+//Expr* Parser::term()
 //{
-//	Expr* expr = factor(); // get the left operand
-//    while (match({ "T_PLUS", "T_MINUS" })) 
+//    Expr* expr = factor();
+//    while (match({ "T_PLUS", "T_MINUS" }))
 //    {
 //        string op = tokens[current - 1].val;
 //        Expr* right = factor();
@@ -131,11 +138,10 @@
 //    return expr;
 //}
 //
-//Expr* Parser::comparison()  // handles <, >, <=, >= operations
+//Expr* Parser::comparison()
 //{
-//    // comparison    ? term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 //    Expr* expr = term();
-//    while (match({ "T_LT", "T_LEQ", "T_GT", "T_GEQ" })) 
+//    while (match({ "T_LT", "T_LEQ", "T_GT", "T_GEQ" }))
 //    {
 //        string op = tokens[current - 1].val;
 //        Expr* right = term();
@@ -144,35 +150,34 @@
 //    return expr;
 //}
 //
-//Expr* Parser::equality()  // handles == and != operations
+//Expr* Parser::equality()
 //{
-//	Expr* expr = comparison();
-//
-//    while (match({ "T_EQ", "T_NEQ" })) 
+//    Expr* expr = comparison();
+//    while (match({ "T_EQ", "T_NEQ" }))
 //    {
 //        string op = tokens[current - 1].val;
 //        Expr* right = comparison();
 //        expr = new BinaryExpr(expr, op, right);
-//	}
-//	return expr;
+//    }
+//    return expr;
 //}
 //
 //Expr* Parser::logicalAnd()
 //{
 //    Expr* expr = equality();
-//    while (match({ "T_AND" })) 
+//    while (match({ "T_AND" }))
 //    {
 //        string op = tokens[current - 1].val;
 //        Expr* right = equality();
 //        expr = new BinaryExpr(expr, op, right);
 //    }
-//	return expr;
+//    return expr;
 //}
 //
 //Expr* Parser::logicalOr()
 //{
 //    Expr* expr = logicalAnd();
-//    while (match({ "T_OR" })) 
+//    while (match({ "T_OR" }))
 //    {
 //        string op = tokens[current - 1].val;
 //        Expr* right = logicalAnd();
@@ -181,13 +186,11 @@
 //    return expr;
 //}
 //
-//Expr* Parser::assignment() // handles assignment operations
+//Expr* Parser::assignment()
 //{
-//    
 //    if (match({ "T_IDENTIFIER" }))
 //    {
-//        Expr* left = nullptr;
-//        left = new IdentifierExpr(tokens[current - 1].val);
+//        Expr* left = new IdentifierExpr(tokens[current - 1].val);
 //
 //        if (match({ "T_ASSIGN" }))
 //        {
@@ -197,17 +200,21 @@
 //            {
 //                return new BinaryExpr(left, op, right);
 //            }
-//			throw ParseError::ExpectedExpr();
+//            throw ParseError::ExpectedExpr();
 //        }
-//        
+//        else
+//        {
+//            // Not an assignment - continue with logicalOr to handle operators like +
+//            current--; // Put the identifier back so logicalOr can handle it
+//            return logicalOr();
+//        }
 //    }
-//
-//	return logicalOr();
+//    return logicalOr();
 //}
 //
-//Expr* Parser::expression()  // checks for equality first
+//Expr* Parser::expression()
 //{
-//	return assignment();
+//    return assignment();
 //}
 //
 //Stmt* Parser::exprStatement()
@@ -218,25 +225,25 @@
 //    return new ExprStmt(expr);
 //}
 //
-//Block* Parser::block() 
+//Block* Parser::block()
 //{
-//    if (!match({ "T_LBRACE" })) 
+//    if (!match({ "T_LBRACE" }))
 //    {
 //        throw ParseError::ExpectedTypeToken();
 //    }
 //    Block* block = new Block();
-//    while (!check("T_RBRACE") && !isAtEnd()) 
+//    while (!check("T_RBRACE") && !isAtEnd())
 //    {
-//        block->statements.push_back(declaration());
+//        block->statements.push_back(statement());
 //    }
-//    if (!match({ "T_RBRACE" })) 
+//    if (!match({ "T_RBRACE" }))
 //    {
 //        throw ParseError::ExpectedTypeToken();
 //    }
 //    return block;
 //}
 //
-//vector<string> Parser::parameters() //function parameters
+//vector<string> Parser::parameters()
 //{
 //    vector<string> params;
 //
@@ -244,74 +251,88 @@
 //    {
 //        do
 //        {
+//            // Parse parameter type
+//            string paramType = parseReturnType(); // Reuse the same logic
+//
 //            if (!match({ "T_IDENTIFIER" }))
 //                throw ParseError::ExpectedIdentifier();
-//            params.push_back(tokens[current - 1].val);
+//
+//            // Store as "type name" or just name depending on your design
+//            string paramName = tokens[current - 1].val;
+//            params.push_back(paramType + " " + paramName); // Or just paramName if you want to store types separately
+//
 //        } while (match({ "T_COMMA" }));
 //    }
 //    if (!match({ "T_RPAREN" }))
-//		throw ParseError::ExpectedTypeToken(); // Expect ')'
-//	return params;
+//        throw ParseError::ExpectedTypeToken();
+//    return params;
 //}
 //
-//Stmt* Parser::funcDeclaration() 
+//string Parser::parseReturnType()
 //{
-//    if (!match({ "T_FUNCTION" })) 
-//    {
-//        throw ParseError::UnexpectedToken(peek());
-//    }
-//    if (!match({ "T_IDENTIFIER" })) 
-//    {
-//        throw ParseError::ExpectedIdentifier();
+//    // Handle void return type
+//    if (match({ "T_VOID" })) {
+//        return "void";
 //    }
 //
-//    string name = tokens[current - 1].val;
-//
-//    if (!match({ "T_LPAREN" }))
-//        throw ParseError::ExpectedTypeToken(); // Expect '('
-//
-//	vector<string> params = parameters();
-//
-//    Block* body = block();
-//    return new funcDecl(name, params, body);
-//}
-//
-//vector<string> Parser::type()
-//{
-//    vector<string> types;
-//    if (match({ "T_INT", "T_FLOAT", "T_STRING", "T_BOOL", "T_DOUBLE", "T_LONG", "T_SHORT" })) //types
-//    {
-//        types.push_back(tokens[current - 1].type);
-//    }
+//    // Handle other types
+//    string type;
+//    if (match({ "T_INT" }))
+//        type = "int";
+//    else if (match({ "T_FLOAT" }))
+//        type = "float";
+//    else if (match({ "T_STRING" }))
+//        type = "string";
+//    else if (match({ "T_BOOL" }))
+//        type = "bool";
+//    else if (match({ "T_DOUBLE" }))
+//        type = "double";
+//    else if (match({ "T_LONG" }))
+//        type = "long";
+//    else if (match({ "T_SHORT" }))
+//        type = "short";
+//    else if (match({ "T_CHAR" }))
+//        type = "char";
 //    else
-//    {
 //        throw ParseError::ExpectedTypeToken();
-//    }
-//	return types;
+//
+//    return type;
 //}
 //
 //
-//Stmt* Parser::varDeclaration() 
+//Stmt* Parser::varDeclaration()
 //{
-//    if (!match(type())) //types
-//    {
+//    string type;
+//    if (match({ "T_INT" }))
+//        type = "int";
+//    else if (match({ "T_FLOAT" }))
+//        type = "float";
+//    else if (match({ "T_STRING" }))
+//        type = "string";
+//    else if (match({ "T_BOOL" }))
+//        type = "bool";
+//    else if (match({ "T_DOUBLE" }))
+//        type = "double";
+//    else if (match({ "T_LONG" }))
+//        type = "long";
+//    else if (match({ "T_SHORT" }))
+//        type = "short";
+//    else
 //        throw ParseError::ExpectedTypeToken();
-//    }
-//    string type = tokens[current - 1].val;
 //
-//    if (!match({ "T_IDENTIFIER" })) 
+//    if (!match({ "T_IDENTIFIER" }))
 //    {
 //        throw ParseError::ExpectedIdentifier();
 //    }
 //    string name = tokens[current - 1].val;
 //
 //    Expr* initializer = nullptr;
-//    if (match({ "T_ASSIGN" })) 
+//    if (match({ "T_ASSIGN" }))
 //    {
 //        initializer = expression();
 //    }
 //
-//    if (!match({ "T_SEMICOLON" })) 
+//    if (!match({ "T_SEMICOLON" }))
 //    {
 //        throw ParseError::UnexpectedToken(peek());
 //    }
@@ -319,107 +340,146 @@
 //    return new VarDecl(type, name, initializer);
 //}
 //
-//
 //Stmt* Parser::declaration()
 //{
-//    // extend later for if, while, etc.
+//    // Only try function parsing if we start with a valid type
+//    if (check("T_INT") || check("T_FLOAT") || check("T_VOID") || check("T_STRING") ||
+//        check("T_BOOL") || check("T_DOUBLE") || check("T_LONG") || check("T_SHORT") || check("T_CHAR")) {
 //
-//    if (match({ "T_FUNCTION" }))
-//    {
-//        current--; // step back to let funcDeclaration handle the 'function' token
-//        return funcDeclaration();
+//        size_t saved = current;
+//
+//        try {
+//            string returnType = parseReturnType();
+//
+//            // Peek ahead without consuming to check function pattern
+//            size_t peekPos = current;
+//            if (check("T_IDENTIFIER")) {
+//                string potentialName = peek().val;
+//                peekPos++;
+//                // Look ahead one more token to see if it's '('
+//                if (peekPos < tokens.size() && tokens[peekPos].type == "T_LPAREN") {
+//                    // Definitely a function - consume the tokens
+//                    match({ "T_IDENTIFIER" }); // Consume the name
+//                    string name = tokens[current - 1].val;
+//
+//                    if (!match({ "T_LPAREN" }))
+//                        throw ParseError::ExpectedTypeToken();
+//
+//                    vector<string> params = parameters();
+//                    Block* body = nullptr;
+//
+//                    // Function definition with body
+//                    if (check("T_LBRACE")) {
+//                        // Function definition: has body
+//                        body = block();
+//                    }
+//                    else if (match({ "T_SEMICOLON" })) {
+//                        // Function declaration ends with semicolon, no body
+//                        body = nullptr;
+//                    }
+//                    else {
+//                        throw ParseError::UnexpectedToken(peek());
+//                    }
+//
+//                    return new funcDecl(returnType, name, params, body);
+//                }
+//            }
+//            // Not a function - restore
+//            current = saved;
+//        }
+//        catch (const ParseError&) {
+//            current = saved;
+//        }
 //    }
 //
-//	return varDeclaration(); // default to variable declaration
+//    return varDeclaration();
 //}
 //
-//Stmt* Parser::ifStatement() 
+//Stmt* Parser::continueStatement()
 //{
-//    if(match({ "T_IF" }))
-//    {
-//        if (!match({ "T_LPAREN" }))
-//            throw ParseError::UnexpectedToken(peek());
-//        Expr* condition = expression();
-//        if (!match({ "T_RPAREN" }))
-//            throw ParseError::UnexpectedToken(peek());
-//        Stmt* thenBranch = statement();
-//        Stmt* elseBranch = nullptr;
-//        if (match({ "T_ELSE" })) 
-//        {
-//            elseBranch = statement();
-//        }
-//        return new IfStmt(condition, thenBranch, elseBranch);
-//	}
-//	throw ParseError::UnexpectedToken(peek());
-//}
-//
-//Stmt* Parser::whileStatement() 
-//{
-//    if (match({ "T_LPAREN" }))
-//    {
-//        Expr* condition = expression();
-//        if (!match({ "T_RPAREN" }))
-//            throw ParseError::UnexpectedToken(peek());
-//		if (match({ "T_SEMICOLON" }))
-//			throw ParseError::UnexpectedToken(peek());
-//        if (match({ "T_RBRACE" }))
-//        {
-//            Stmt* body = statement();
-//            if(!match({ "T_RBRACE" }))
-//				throw ParseError::UnexpectedToken(peek());
-//            return new WhileStmt(condition, body);
-//        }
-//    }
-//	throw ParseError::UnexpectedToken(peek());
-//}
-//
-//Stmt* Parser::returnStatement() 
-//{
-//	Expr* expr = nullptr;
-//    if (match({ "T_SEMICOLON" })) // 
-//        return new ReturnStmt(expr); // void return
-//    expr = expression();
 //    if (!match({ "T_SEMICOLON" }))
 //        throw ParseError::UnexpectedToken(peek());
-//	return new ReturnStmt(expr);
+//    return new ContinueStmt();
 //}
 //
-//Stmt* Parser::forStatement() 
+//Stmt* Parser::ifStatement()
 //{
-//    if (match({ "T_LPAREN" }))
+//    if (!match({ "T_LPAREN" }))
+//        throw ParseError::UnexpectedToken(peek());
+//    Expr* condition = expression();
+//    if (!match({ "T_RPAREN" }))
+//        throw ParseError::UnexpectedToken(peek());
+//	// if left curly brakets then it's a block statement
+//    Stmt* thenBranch = block();
+//    Stmt* elseBranch = nullptr;
+//    if (match({ "T_ELSE" }))
 //    {
-//        Stmt* init = declaration(); // initialization
-//        if(!match({ "T_SEMICOLON" }))
-//            throw ParseError::ExpectedForLoopParts();
-//
-//        Expr* condition = expression(); // condition
-//        if (!match({ "T_SEMICOLON" }))
-//            throw ParseError::ExpectedForLoopParts();
-//
-//        Expr* update = expression(); // increment
-//
-//        if (!match({ "T_RPAREN" }))
-//            throw ParseError::ExpectedForLoopParts();
-//
-//        Stmt* body = nullptr;
-//
-//        if (match({ "T_LBRACE" }))
+//		// if again if, then it's an else if statement
+//        if(match({ "T_IF" }))
 //        {
-//            body = statement(); // loop body
+//            elseBranch = ifStatement();
+//		}
+//        else
+//        {
+//			elseBranch = block();
+//        }
+//    }
+//    return new IfStmt(condition, thenBranch, elseBranch);
+//}
 //
-//            if (!match({ "T_RBRACE" }))
-//                throw ParseError::UnexpectedToken(peek());
-//			return new ForStmt(init, condition, update, body);
+//Stmt* Parser::whileStatement()
+//{
+//    if (!match({ "T_LPAREN" }))
+//        throw ParseError::UnexpectedToken(peek());
+//    Expr* condition = expression();
+//    if (!match({ "T_RPAREN" }))
+//        throw ParseError::UnexpectedToken(peek());
+//    // Allow either a block or a single statement as the loop body
+//	Stmt* body = block();
+//    return new WhileStmt(condition, body);
+//}
+//
+//Stmt* Parser::returnStatement()
+//{
+//    Expr* expr = nullptr;
+//    if (!check("T_SEMICOLON")) {
+//        expr = expression();
+//    }
+//    if (!match({ "T_SEMICOLON" }))
+//        throw ParseError::UnexpectedToken(peek());
+//    return new ReturnStmt(expr);
+//}
+//
+//Stmt* Parser::forStatement()
+//{
+//    
+//    if (!match({ "T_LPAREN" }))
+//        throw ParseError::UnexpectedToken(peek());
+//
+//    Stmt* init = nullptr;
+//    if (!check("T_SEMICOLON")) {
+//        // Check if it's a variable declaration or expression
+//        if (check("T_INT") || check("T_FLOAT") || check("T_STRING") ||
+//            check("T_BOOL") || check("T_DOUBLE") || check("T_LONG") ||
+//            check("T_SHORT") || check("T_CHAR")) {
+//            init = varDeclaration();  // Variable declaration: int i = 0
 //        }
 //        else 
 //        {
-//            body = statement(); // loop body
-//            return new ForStmt(init, condition, update, body);
+//            init = exprStatement();   // Expression: int i = 0, x = 5, etc.
 //        }
-//
-//		throw ParseError::UnexpectedToken(peek());
-//        
 //    }
+//
+//    Stmt* condition = exprStatement();
+//
+//	Expr* update = expression();
+//
+//    if (!match({ "T_RPAREN" }))
+//		throw ParseError::UnexpectedToken(peek());
+//
+//	Stmt* body = block();
+//    return new ForStmt(init, condition, update, body);
+//    
 //}
 //
 //Stmt* Parser::breakStatement()
@@ -431,98 +491,80 @@
 //
 //Stmt* Parser::switchStatement()
 //{
-//    if(match({ "T_LPAREN" }))
+//    if (!match({ "T_LPAREN" }))
+//        throw ParseError::UnexpectedToken(peek());
+//    Expr* expr = expression();
+//    if (!match({ "T_RPAREN" }))
+//        throw ParseError::UnexpectedToken(peek());
+//
+//    if (!match({ "T_LBRACE" }))
+//        throw ParseError::UnexpectedToken(peek());
+//
+//    vector<pair<Expr*, Stmt*>> cases;
+//    Stmt* defaultCase = nullptr;
+//
+//    while (!check("T_RBRACE") && !isAtEnd())
 //    {
-//        Expr* expr = expression();
-//        if (!match({ "T_RPAREN" }))
-//            throw ParseError::UnexpectedToken(peek());
-//
-//        if (!match({ "T_LBRACE" }))
-//            throw ParseError::UnexpectedToken(peek());
-//
-//        vector<pair<Expr*, Stmt*>> cases;
-//        Stmt* defaultCase = nullptr;
-//
-//        while (!check("T_RBRACE") && !isAtEnd())
+//        if (match({ "T_CASE" }))
 //        {
-//            if (match({ "T_CASE" }))
-//            {
-//                Expr* caseExpr = expression();
-//                if (!match({ "T_COLON" }))
-//                    throw ParseError::UnexpectedToken(peek());
-//                Stmt* caseStmt = statement();
-//                cases.push_back({ caseExpr, caseStmt });
-//                if(match({ "T_BREAK" }))
-//                {
-//                    if (!match({ "T_SEMICOLON" }))
-//                        throw ParseError::UnexpectedToken(peek());
-//				}
-//                else if (match({ "T_CONTINUE" }))
-//                {
-//                    if (!match({ "T_SEMICOLON" }))
-//                        throw ParseError::UnexpectedToken(peek());
-//                }
-//            }
-//            else if (match({ "T_DEFAULT" }))
-//            {
-//                if (!match({ "T_COLON" }))
-//                    throw ParseError::UnexpectedToken(peek());
-//                defaultCase = statement();
-//                if (match({ "T_BREAK" }))
-//                {
-//                    if (!match({ "T_SEMICOLON" }))
-//                        throw ParseError::UnexpectedToken(peek());
-//                }
-//                else if (match({ "T_CONTINUE" }))
-//                {
-//                    if (!match({ "T_SEMICOLON" }))
-//                        throw ParseError::UnexpectedToken(peek());
-//				}
-//            }
-//            else
-//            {
+//            Expr* caseExpr = expression();
+//            if (!match({ "T_COLON" }))
 //                throw ParseError::UnexpectedToken(peek());
-//            }
+//            Stmt* caseStmt = statement();
+//            cases.push_back({ caseExpr, caseStmt });
 //        }
-//        if (!match({ "T_RBRACE" }))
+//        else if (match({ "T_DEFAULT" }))
+//        {
+//            if (!match({ "T_COLON" }))
+//                throw ParseError::UnexpectedToken(peek());
+//            defaultCase = statement();
+//        }
+//        else
+//        {
 //            throw ParseError::UnexpectedToken(peek());
+//        }
+//    }
+//    if (!match({ "T_RBRACE" }))
+//        throw ParseError::UnexpectedToken(peek());
 //
-//        return new SwitchStmt(expr, cases, defaultCase);
-//	}
-//
-//	throw ParseError::UnexpectedToken(peek());
+//    return new SwitchStmt(expr, cases, defaultCase);
 //}
 //
-//Stmt* Parser::statement() 
+//Stmt* Parser::statement()
 //{
-//    if (match({ "T_IF" })) 
+//    if (match({ "T_IF" }))
 //        return ifStatement();
 //    if (match({ "T_FOR" }))
 //        return forStatement();
-//    if (match({ "T_WHILE" })) 
+//    if (match({ "T_WHILE" }))
 //        return whileStatement();
 //    if (match({ "T_SWITCH" }))
 //        return switchStatement();
 //    if (match({ "T_BREAK" }))
 //        return breakStatement();
-//    if (match({ "T_RETURN" })) 
+//    if (match({ "T_CONTINUE" }))
+//        return continueStatement();
+//    if (match({ "T_RETURN" }))
 //        return returnStatement();
-//    if (match({"T_CONTINUE"}))
-//		return breakStatement();
-//    if (match({ "T_LBRACE" })) 
+//
+//    if (match({ "T_LBRACE" }))
 //        return block();
+//
+//    if (check("T_INT") || check("T_FLOAT") || check("T_STRING") ||
+//        check("T_BOOL") || check("T_DOUBLE") || check("T_LONG") ||
+//        check("T_SHORT") || check("T_CHAR")) {
+//        return varDeclaration();
+//    }
 //
 //    return exprStatement();
 //}
 //
-//Program* Parser::parseProgram()  // parse the complete source code
+//Program* Parser::parseProgram()
 //{
 //    Program* program = new Program();
-//    while (!isAtEnd()) 
+//    while (!isAtEnd())
 //    {
 //        program->statements.push_back(declaration());
 //    }
 //    return program;
 //}
-//
-//// add function calls, assignments,if-else, loops, return statements, unary expressions, paranthesis expression etc. later

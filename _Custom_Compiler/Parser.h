@@ -20,13 +20,11 @@
 //    bool isAtEnd();
 //
 //    // Grammar rules
-//    
-//    Stmt* declaration(); // 
+//    Stmt* declaration();
 //    Block* block();
 //    Stmt* varDeclaration();
-//    Stmt* funcDeclaration();
+//    string parseReturnType();
 //    vector<string> parameters();
-//    vector<string> type();
 //    Stmt* statement();
 //	Stmt* exprStatement();
 //    Stmt* ifStatement();
@@ -35,6 +33,7 @@
 //	Stmt* forStatement();
 //	Stmt* breakStatement();
 //    Stmt* switchStatement();
+//    Stmt* continueStatement();
 //    Expr* expression(); // like e.g a + b * c
 //	Expr* assignment();
 //	Expr* logicalOr(); // like e.g a || b
