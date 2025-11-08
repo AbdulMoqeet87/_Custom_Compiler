@@ -901,7 +901,7 @@ private:
             advance();
             return make_shared<IntLiteral>(t.val);
         }
-        if (check("T_FLOATLIT")) {
+        if (check("T_FLOAT_LIT")) {
             advance();
             return make_shared<FloatLiteral>(t.val);
         }
