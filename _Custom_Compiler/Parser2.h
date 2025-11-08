@@ -32,8 +32,10 @@ struct ASTNode
     virtual ~ASTNode() = default;
     virtual void print(int indent = 0) const = 0;
 protected:
-    static void printIndent(int n) {
-        for (int i = 0; i < n; ++i) cout << "  ";
+    static void printIndent(int n) 
+    {
+        for (int i = 0; i < n; ++i) 
+            cout << "  ";
     }
 };
 
@@ -54,7 +56,8 @@ struct IdentifierExpr : Expr
 {
     string name;
     IdentifierExpr(string n) : name(n) {}
-    void print(int indent = 0) const override {
+    void print(int indent = 0) const override 
+    {
         printIndent(indent);
         cout << "Identifier(" << name << ")\n";
     }
@@ -64,7 +67,8 @@ struct IntLiteral : Expr
 {
     string val;
     IntLiteral(string v) : val(v) {}
-    void print(int indent = 0) const override {
+    void print(int indent = 0) const override 
+    {
         printIndent(indent);
         cout << "Int(" << val << ")\n";
     }
@@ -291,15 +295,36 @@ struct FuncDecl : ASTNode
     }
 };
 
+//struct Program : ASTNode
+//{
+//    vector<shared_ptr<FuncDecl>> functions;
+//    void print(int indent = 0) const override
+//    {
+//        cout << "Program\n";
+//        for (auto& f : functions) f->print(indent + 1);
+//    }
+//};
 struct Program : ASTNode
 {
     vector<shared_ptr<FuncDecl>> functions;
+    vector<shared_ptr<VarDeclStmt>> globals; // Added to store global variables
+
     void print(int indent = 0) const override
     {
         cout << "Program\n";
-        for (auto& f : functions) f->print(indent + 1);
+
+        if (!globals.empty()) {
+            printIndent(indent + 1);
+            cout << "Globals:\n";
+            for (auto& g : globals)
+                g->print(indent + 2);
+        }
+
+        for (auto& f : functions)
+            f->print(indent + 1);
     }
 };
+
 
 class Parser
 {
@@ -384,7 +409,7 @@ public:
             tokens.push_back(token("eof", "UnexpectedEOF", tokens.back().line_no));
     }
 
-    shared_ptr<Program> parseProgram()
+ /*   shared_ptr<Program> parseProgram()
     {
         auto program = make_shared<Program>();
         while (!isAtEnd() && peekToken().type != "eof")
@@ -392,7 +417,91 @@ public:
             program->functions.push_back(parseFunction());
         }
         return program;
+    }*/
+    void parseComment() {
+        token t = peekToken();
+
+        // If current token is comment start
+        if (check("T_COMSTART")) {
+            advance(); // consume /*
+            bool foundEnd = false;
+
+            while (!isAtEnd()) {
+                if (check("T_COMEND")) {
+                    foundEnd = true;
+                    advance(); // consume */
+                    break;
+                }
+                else {
+                    advance(); // skip other tokens inside comment
+                }
+            }
+
+            if (!foundEnd) {
+                token tk = peekToken();
+                ThrowError("Expected comment end '*/' before EOF", tk.line_no, tk.val, tk.type);
+            }
+        }
+        // If we find comment end without start
+        else if (check("T_COMEND")) {
+            token tk = peekToken();
+            ThrowError("Unexpected comment end '*/' without matching start", tk.line_no, tk.val, tk.type);
+        }
+        // Otherwise just move forward
+        else {
+            advance();
+        }
     }
+
+    shared_ptr<Program> parseProgram()
+    {
+        auto program = make_shared<Program>();
+
+        while (!isAtEnd() && peekToken().type != "eof")
+        {
+
+            if (check("T_COMSTART") || check("T_COMEND")) {
+                parseComment();
+                continue;
+            }
+            token t = peekToken();
+            // Check if this could be a global variable
+            if (isTypeToken(t.type))
+            {
+                token next = peekNext();
+                if (next.type == "T_IDENTIFIER")
+                {
+                    size_t save = pos;   // save current position
+                    advance(); advance(); // skip type and identifier
+
+                    if (check("T_ASSIGN") || check("T_SEMICOLON"))
+                    {
+                        // rollback to saved position
+                        pos = save;
+
+                        // parse as VarDeclStmt
+                        StmtPtr stmt = parseVarDeclStmt();
+                        auto varDecl = dynamic_pointer_cast<VarDeclStmt>(stmt);
+                        if (!varDecl) {
+                            throw runtime_error("Expected VarDeclStmt while parsing global variable");
+                        }
+
+                        program->globals.push_back(varDecl);
+                        continue;
+                    }
+
+                    // rollback if not a global variable
+                    pos = save;
+                }
+            }
+
+            // Otherwise, must be a function
+            program->functions.push_back(parseFunction());
+        }
+
+        return program;
+    }
+
 
 private:
     void ThrowError(string message, int line_no, string val, string type)
@@ -504,11 +613,15 @@ private:
     StmtPtr parseStatement()
     {
         token t = peekToken();
-        if (check("T_SEMICOLON"))
+        if (check("T_SEMICOLON")) {
+            advance();
+            return make_shared<ExprStmt>(nullptr); // represent an empty statement
+        }
+        /*if (check("T_SEMICOLON"))
         {
             advance();
             return make_shared<BlockStmt>()->stmts.empty() ? (StmtPtr)make_shared<ExprStmt>(nullptr) : nullptr;
-        }
+        }*/
 
         if (check("T_RETURN")) return parseReturnStmt();
         if (check("T_IF")) return parseIfStmt();
@@ -516,7 +629,11 @@ private:
         if (check("T_FOR")) return parseForStmt();
         if (check("T_LBRACE")) return parseBlockStmt();
         if (isTypeToken(t.type)) return parseVarDeclStmt();
-        if (check("T_SEMICOLON")) { advance(); return make_shared<ExprStmt>(nullptr); }
+        if (check("T_SEMICOLON")) 
+        { 
+            advance();
+            return make_shared<ExprStmt>(nullptr); 
+        }
 
         return parseExprStmt();
     }
@@ -617,7 +734,8 @@ private:
         string name = peekToken().val;
         advance();
         ExprPtr init = nullptr;
-        if (check("T_ASSIGN")) {
+        if (check("T_ASSIGN")) 
+        {
             advance();
             init = parseExpr();
         }
@@ -634,7 +752,8 @@ private:
     // Assignment → T_IDENTIFIER T_ASSIGN Assignment | OrExpr
     ExprPtr parseAssignment()
     {
-        if (check("T_IDENTIFIER")) {
+        if ( check("T_IDENTIFIER")) 
+        {
 
             token id = peekToken();
             if (peekNext().type == "T_ASSIGN") {
@@ -653,7 +772,8 @@ private:
     ExprPtr parseOrExpr()
     {
         ExprPtr left = parseAndExpr();
-        while (check("T_OR")) {
+        while (check("T_OR")) 
+        {
             string op = peekToken().type; advance();
             ExprPtr right = parseAndExpr();
             left = make_shared<BinaryExpr>(left, op, right);
@@ -664,7 +784,8 @@ private:
     ExprPtr parseAndExpr()
     {
         ExprPtr left = parseEquality();
-        while (check("T_AND")) {
+        while (check("T_AND")) 
+        {
             string op = peekToken().type; advance();
             ExprPtr right = parseEquality();
             left = make_shared<BinaryExpr>(left, op, right);
@@ -735,16 +856,22 @@ private:
     ExprPtr parsePostfix()
     {
         ExprPtr left = parsePrimary();
-        while (true) {
-            if (check("T_LPAREN")) {
+        while (true) 
+        {
+            if (check("T_LPAREN")) 
+            {
                 advance();
                 auto call = make_shared<CallExpr>(left);
-                if (!check("T_RPAREN")) {
-
-                    while (true) {
+                if (!check("T_RPAREN")) 
+                {
+                    while (true) 
+                    {
                         ExprPtr arg = parseExpr();
                         call->args.push_back(arg);
-                        if (check("T_COMMA")) { advance(); continue; }
+                        if (check("T_COMMA"))
+                        { advance();
+                            continue; 
+                        }
                         break;
                     }
                 }
@@ -752,7 +879,8 @@ private:
                 left = call;
                 continue;
             }
-            else if (check("T_INC") || check("T_DEC")) {
+            else if (check("T_INC") || check("T_DEC"))
+            {
                 string op = peekToken().type; advance();
                 left = make_shared<PostfixExpr>(left, op);
                 continue;
@@ -778,11 +906,11 @@ private:
             advance();
             return make_shared<FloatLiteral>(t.val);
         }
-        if (check("T_STRING_LITERAL")) {
+        if (check("T_STRING_LIT")) {
             advance();
             return make_shared<StringLiteral>(t.val);
         }
-        if (check("T_CHAR_LITERAL")) {
+        if (check("T_CHAR_LIT")) {
             advance();
             return make_shared<CharLiteral>(t.val);
         }

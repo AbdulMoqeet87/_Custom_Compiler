@@ -1,5 +1,9 @@
- int abc(int x)   
-{
-	int h = "h";
-    return 0;
+
+int add(int a, int b) {
+
+int result = a / b;
+	if(a==b || b==a)
+		{ result = a*b; }
+
+    return result;
 }
