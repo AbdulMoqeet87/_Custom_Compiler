@@ -1,13 +1,12 @@
-
-// Hello
-
-/* int x=5;*/
 int globe = 78;
-int gl2= 2%3;
-int func(int a, int b)
+int add(int a,int b)
 {
-	int x= a*b;
-	float f= 123.456e10;
-	string c= "abx";
-return c;
+	int sum = a+b;
+return sum;
+}
+int globe2=5;
+int add2(int a,int b)
+{
+	int sum = a+b;
+return sum;
 }

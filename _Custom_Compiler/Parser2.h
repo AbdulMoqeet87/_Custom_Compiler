@@ -303,24 +303,36 @@ struct FuncDecl : ASTNode
 //        for (auto& f : functions) f->print(indent + 1);
 //    }
 //};
+//struct Program : ASTNode
+//{
+//    vector<shared_ptr<FuncDecl>> functions;
+//    vector<shared_ptr<VarDeclStmt>> globals; // Added to store global variables
+//
+//    void print(int indent = 0) const override
+//    {
+//        cout << "Program\n";
+//
+//        if (!globals.empty()) {
+//            printIndent(indent + 1);
+//            cout << "Globals:\n";
+//            for (auto& g : globals)
+//                g->print(indent + 2);
+//        }
+//
+//        for (auto& f : functions)
+//            f->print(indent + 1);
+//    }
+//};
+
 struct Program : ASTNode
 {
-    vector<shared_ptr<FuncDecl>> functions;
-    vector<shared_ptr<VarDeclStmt>> globals; // Added to store global variables
+    vector<shared_ptr<ASTNode>> globalItems; // single array for both funcs + globals
 
     void print(int indent = 0) const override
     {
         cout << "Program\n";
-
-        if (!globals.empty()) {
-            printIndent(indent + 1);
-            cout << "Globals:\n";
-            for (auto& g : globals)
-                g->print(indent + 2);
-        }
-
-        for (auto& f : functions)
-            f->print(indent + 1);
+        for (auto& item : globalItems)
+            item->print(indent + 1);
     }
 };
 
@@ -464,38 +476,34 @@ public:
                 continue;
             }
             token t = peekToken();
+
             // Check if this could be a global variable
             if (isTypeToken(t.type))
             {
                 token next = peekNext();
                 if (next.type == "T_IDENTIFIER")
                 {
-                    size_t save = pos;   // save current position
-                    advance(); advance(); // skip type and identifier
+                    size_t save = pos;
+                    advance(); advance();
 
                     if (check("T_ASSIGN") || check("T_SEMICOLON"))
                     {
-                        // rollback to saved position
                         pos = save;
 
-                        // parse as VarDeclStmt
                         StmtPtr stmt = parseVarDeclStmt();
                         auto varDecl = dynamic_pointer_cast<VarDeclStmt>(stmt);
-                        if (!varDecl) {
+                        if (!varDecl)
                             throw runtime_error("Expected VarDeclStmt while parsing global variable");
-                        }
 
-                        program->globals.push_back(varDecl);
+                        program->globalItems.push_back(varDecl);
                         continue;
                     }
 
-                    // rollback if not a global variable
                     pos = save;
                 }
             }
-
-            // Otherwise, must be a function
-            program->functions.push_back(parseFunction());
+            
+            program->globalItems.push_back(parseFunction());
         }
 
         return program;
