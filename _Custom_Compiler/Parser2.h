@@ -414,8 +414,8 @@ public:
     Parser(const string& filename) : pos(0)
     {
         tokens = lexer.GenerateTokens(filename);
-        for (auto i : tokens)
-            cout << i.type << " " << i.val << endl;        
+       /* for (auto i : tokens)
+            cout << i.type << " " << i.val << endl;        */
         if (tokens.empty() || tokens.back().type != "eof")
             tokens.push_back(token("eof", "UnexpectedEOF", tokens.back().line_no));
     }

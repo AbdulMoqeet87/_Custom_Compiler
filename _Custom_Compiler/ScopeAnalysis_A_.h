@@ -82,14 +82,30 @@ public:
         cout << "Parsed Program AST:\n";
         program->print();
         cout << "Scope Analysis Starting.\n";
-        for (const auto& func : program->functions) {
-            // Check for function redefinition in global scope
-            if (!globalScope->declareSym(Symbol(func->name, func->retType, true))) {
-                reportError(FunctionPrototypeRedefinition, func->name);
-                return;
+        for (const auto& item : program->globalItems)
+        {
+            if (auto func = dynamic_pointer_cast<FuncDecl>(item)) 
+            {
+                // Handle function declaration
+                if (!globalScope->declareSym(Symbol(func->name, func->retType, true))) {
+                    reportError(FunctionPrototypeRedefinition, func->name);
+                    return;
+                }
+                analyzeFunction(func);
             }
-            analyzeFunction(func);
+            else if (auto var = dynamic_pointer_cast<VarDeclStmt>(item)) 
+            {
+                // Handle global variable declaration
+                if (!globalScope->declareSym(Symbol(var->name, var->typeTok, false))) 
+                {
+                    reportError(VariableRedefinition, var->name);
+                    return;
+                }
+                if (var->init)
+                    analyzeExpr(var->init);
+            }
         }
+
     }
 
 private:

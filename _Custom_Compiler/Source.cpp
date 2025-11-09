@@ -1,6 +1,7 @@
 #include<iostream>
 #include "Without_regex_Lexer.h"
 #include"with_regex_Lexer.h"
+#include "ScopeAnalysis_A_.h"
 //#include"Parser.h"
 #include"Parser2.h"
 
@@ -43,21 +44,33 @@ using namespace std;
 //    return 0;
 //}
 
+//
+//int main()
+//{
+//	try
+//	{
+//		Parser p("text.txt");
+//		auto pars = p.parseProgram();
+//		pars->print();
+//
+//	}
+//	catch (const std::exception& e)
+//	{
+//		cout << e.what();
+//	}
+//
+//	return 0;
+//
+//}
 
-int main()
-{
-	try
-	{
-		Parser p("text.txt");
-		auto pars = p.parseProgram();
-		pars->print();
 
-	}
-	catch (const std::exception& e)
-	{
-		cout << e.what();
-	}
 
-	return 0;
-
+int main() {
+    try {
+        ScopeAnalizer analyzer("text.txt");
+        analyzer.analyzeProgram();
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    }
 }

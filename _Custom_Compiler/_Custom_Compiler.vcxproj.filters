@@ -30,6 +30,12 @@
     <ClInclude Include="ParseError.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Parser2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScopeAnalysis_A_.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="with_regex_Lexer.cpp">

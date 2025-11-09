@@ -131,6 +131,7 @@
     <ClInclude Include="Parser2.h" />
     <ClInclude Include="ParseError.h" />
     <ClInclude Include="Parser.h" />
+    <ClInclude Include="ScopeAnalysis_A_.h" />
     <ClInclude Include="Without_regex_Lexer.h" />
     <ClInclude Include="with_regex_Lexer.h" />
   </ItemGroup>
