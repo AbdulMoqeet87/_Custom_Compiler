@@ -1,5 +1,22 @@
- int abc(int x)   
+int a (int x, int y)
 {
-	int h = "h";
-    return 0;
+    int y = 1;
+    {
+        int z = 0;
+        z = z + y;
+        int z = 1;
+    }
+    
+ return x + y; 
+}
+int b (int x, int y)
+{
+int b = a(3, 6);
+int g = c(2);
+
+int f = 1;
+int z = 2;
+int h = 6 * f + 3 * 2 - b * b * z * z;
+int c = 10 - (-b * 10 + 12) + (5 - 10);
+ return x + y; 
 }
