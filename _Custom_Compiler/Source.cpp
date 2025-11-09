@@ -43,19 +43,21 @@ using namespace std;
 //    return 0;
 //}
 
+
 int main()
 {
-    try
-    {
-        Parser p("text.txt");
-        auto pars=p.parseProgram();
-        pars->print();
-    }
-    catch (const std::exception&e)
-    {
-        cout << e.what();
-    }
-    
-    return 0;
+	try
+	{
+		Parser p("text.txt");
+		auto pars = p.parseProgram();
+		pars->print();
+
+	}
+	catch (const std::exception& e)
+	{
+		cout << e.what();
+	}
+
+	return 0;
 
 }
