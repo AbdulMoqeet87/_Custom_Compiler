@@ -63,9 +63,19 @@ using namespace std;
 //
 //}
 
+int add(int x, int y)
+{
+    int add = 6;
+    return add;
+}
+int mai()
+{
+    int m= add(2, 3);
+    return 0;
+}
 
-
-int main() {
+int main()
+{
     try {
         ScopeAnalizer analyzer("text.txt");
         analyzer.analyzeProgram();
@@ -73,4 +83,5 @@ int main() {
     catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << std::endl;
     }
+    return 0;
 }

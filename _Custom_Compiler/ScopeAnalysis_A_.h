@@ -87,9 +87,9 @@ public:
             if (auto func = dynamic_pointer_cast<FuncDecl>(item)) 
             {
                 // Handle function declaration
-                if (!globalScope->declareSym(Symbol(func->name, func->retType, true))) {
-                    reportError(FunctionPrototypeRedefinition, func->name);
-                    return;
+                if (!globalScope->declareSym(Symbol(func->name, func->retType, true))) 
+                {
+                    reportError(FunctionPrototypeRedefinition, func->name);                    
                 }
                 analyzeFunction(func);
             }
@@ -98,13 +98,13 @@ public:
                 // Handle global variable declaration
                 if (!globalScope->declareSym(Symbol(var->name, var->typeTok, false))) 
                 {
-                    reportError(VariableRedefinition, var->name);
-                    return;
+                    reportError(VariableRedefinition, var->name);                   
                 }
                 if (var->init)
                     analyzeExpr(var->init);
             }
         }
+        
 
     }
 

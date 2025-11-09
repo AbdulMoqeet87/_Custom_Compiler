@@ -1,9 +1,18 @@
-int a = 10;
-
-float sum=6;
-
-int abd(int x, int y)
+int m = 0;
+int a (int x, int y)
 {
-    int z = x + y;
-    return z;
+    int y = 1;
+    {
+        int z = 0;
+        z = z + y;
+        z = m;
+    }
+    
+ return x + y; 
+}
+ int m = 9;
+int b (int x, int y)
+{
+int b = a(3, 6);
+int g = c(2);
 }
