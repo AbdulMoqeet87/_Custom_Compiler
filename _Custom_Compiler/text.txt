@@ -1,12 +1,22 @@
-int globe = 78;
-int add(int a,int b)
+int a (int x, int y)
 {
-	int sum = a+b;
-return sum;
+    int y = 1;
+    {
+        int z = 0;
+        z = z + y;
+        int z = 1;
+    }
+    
+ return x + y; 
 }
-int globe2=5;
-int add2(int a,int b)
+int b (int x, int y)
 {
-	int sum = a+b;
-return sum;
+int b = a(3, 6);
+int g = c(2);
+
+int f = 1;
+int z = 2;
+int h = 6 * f + 3 * 2 - b * b * z * z;
+int c = 10 - (-b * 10 + 12) + (5 - 10);
+ return x + y; 
 }
